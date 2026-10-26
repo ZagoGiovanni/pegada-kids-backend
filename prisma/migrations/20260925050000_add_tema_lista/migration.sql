@@ -1,0 +1,3 @@
+-- AddColumn
+ALTER TABLE "ListaPresente"
+ADD COLUMN "tema" TEXT NOT NULL DEFAULT 'NEUTRO';

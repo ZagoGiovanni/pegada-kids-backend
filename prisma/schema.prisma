@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  email    String   @unique
+  senha    String
+  criadoEm DateTime @default(now())
+}
+
+model RecuperacaoSenha {
+  id        Int       @id @default(autoincrement())
+  email     String
+  perfil    String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
+  @@index([email, perfil])
+  @@index([expiraEm])
+}
+
+model Produto {
+  id                Int     @id @default(autoincrement())
+  nome              String
+  descricao         String? @db.Text
+  preco             Decimal @db.Decimal(10, 2)
+  quantidadeEstoque Int
+  imagemUrl         String?
+  categoria         String? @default("Geral")
+
+  tamanhos String? @default("Único")
+
+  estoquesPorTamanho EstoqueProdutoTamanho[]
+  itensPedido        ItemPedido[]
+  listasPresentes    ListaPresenteProduto[]
+}
+
+model EstoqueProdutoTamanho {
+  produtoId  Int
+  tamanho    String
+  quantidade Int    @default(0)
+  ordem      Int    @default(0)
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@id([produtoId, tamanho])
+  @@index([produtoId])
+}
+
+model Cliente {
+  id       Int     @id @default(autoincrement())
+  nome     String
+  email    String  @unique
+  senha    String
+  cpf      String? @unique
+  telefone String?
+
+  cep    String?
+  rua    String?
+  numero String?
+  bairro String?
+  cidade String? @default("Paraguaçu Paulista")
+  estado String? @default("SP")
+
+  pedidos Pedido[]
+  listas  ListaPresente[]
+}
+
+model ListaPresente {
+  id            Int      @id @default(autoincrement())
+  clienteId     Int
+  nomeBebe      String
+  dataEvento    DateTime
+  tema          String   @default("NEUTRO")
+  linkExclusivo String   @unique
+
+  cliente     Cliente                @relation(fields: [clienteId], references: [id])
+  produtos    ListaPresenteProduto[]
+  itensPedido ItemPedido[]
+}
+
+model ListaPresenteProduto {
+  listaId    Int
+  produtoId  Int
+  tamanho    String?
+  comprado   Boolean   @default(false)
+  compradoEm DateTime?
+
+  lista   ListaPresente @relation(fields: [listaId], references: [id], onDelete: Cascade)
+  produto Produto       @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@id([listaId, produtoId])
+}
+
+model Pedido {
+  id          Int      @id @default(autoincrement())
+  clienteId   Int
+  dataCriacao DateTime @default(now())
+  valorTotal  Decimal  @db.Decimal(10, 2)
+  status      String   @default("Pendente")
+  isPresente  Boolean  @default(false)
+
+  metodoPagamento String?
+  mercadoPagoId   String?   @unique
+  qrCodePix       String?   @db.Text
+  processadoEm    DateTime?
+
+  tipoEntrega   String  @default("RETIRADA")
+  cepEntrega    String?
+  ruaEntrega    String?
+  numeroEntrega String?
+  bairroEntrega String?
+  cidadeEntrega String?
+  estadoEntrega String?
+
+  cliente Cliente      @relation(fields: [clienteId], references: [id])
+  itens   ItemPedido[]
+}
+
+model ItemPedido {
+  id              Int     @id @default(autoincrement())
+  pedidoId        Int
+  produtoId       Int
+  quantidade      Int
+  precoUnitario   Decimal @db.Decimal(10, 2)
+  listaPresenteId Int?
+  tamanho         String?
+
+  pedido        Pedido         @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto       Produto        @relation(fields: [produtoId], references: [id])
+  listaPresente ListaPresente? @relation(fields: [listaPresenteId], references: [id])
+
+  @@index([listaPresenteId])
+}

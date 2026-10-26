@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# Variáveis de ambiente e credenciais
+.env
+.env.*
+!.env.example
+
+# Arquivos gerados e temporários
+/generated/prisma/
+tmp/
+output/
+*.log
+
+# Imagens enviadas durante o uso da aplicação
+uploads/*
+!uploads/.gitkeep
